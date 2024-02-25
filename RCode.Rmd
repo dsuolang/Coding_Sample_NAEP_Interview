@@ -1,0 +1,100 @@
+---
+title: "Multiple Imputation for the NHANES 2011-2012 dataset"
+output:
+  pdf_document: default
+  html_document: default
+auhtor: "Deji Suolang"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+```{r, message = FALSE}
+library(mice)
+library(dplyr)
+library(haven)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+library(foreign)
+library(devtools)
+library(lavaan)
+library(survey)
+library(naniar)
+library(finalfit)
+```
+
+```{r}
+df <- read_csv("test_data.csv")
+head(df)
+```
+
+**2. Missing Patterns and Mechanisms**\
+The grid below represents the 26 missing data patterns present in the dataset. The first row represents the 3,670 observations that have complete information for all variables. This is shown by having the value ‘1’ in each column representing non-missing information. The second column represents the 681 observations that are missing information only on the variable "mvpa_accelerometer", and "FPC1", and so forth.
+```{r}
+pattern_summary<-md.pattern(df,plot = F,rotate.names = FALSE)
+pattern_summary
+# Count the number of unique missing data patterns
+nrow(pattern_summary)
+```
+This plot provides location of missing values and missing rates in each variable. Except the accelerometer-derived MVPA duration and FPC, some survey variables also have missing data, they are self-reported MVPA duration, education, poverty/income ratio, and BMI category.
+```{r}
+vis_miss(df)
+```
+I tested the missingness of the accelerometer-derived variables in relation to the explanatory variables, primarily focusing on basic demographic characteristics and analogous. From the below results, it is obvious that Missing Completely at Random (MCAR) does not stand, indicating a need for imputation. We proceed under the assumption of Missing at Random (MAR).
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(finalfit)
+
+explanatory <- c("gender", "race", "edu", "poverty","bmi_cat")
+dependent <- c("mvpa_accelerometer") # I can also use FPC1, as they share the same missing mechanism
+
+df%>% 
+  missing_compare(dependent, explanatory) %>% 
+    knitr::kable(row.names=FALSE, align = c("l", "l", "r", "r", "r"))
+```
+
+**3. Data Transformation**\
+Histogram shows the MVPA duration variables are very skewed, and they may pose problems for estimating the properties of the data, the relationships between variables, and the imputation I will build next. Therefore, a square root transformation is used for normalizing a skewed distribution.
+```{r}
+# Create a function to plot histograms for specified columns
+plot_specific_histograms <- function(df, start_col, end_col) {
+  selected_cols <- names(df)[start_col:end_col]  # Select specified columns
+  par(mfrow = c(ceiling(sqrt(length(selected_cols))), ceiling(sqrt(length(selected_cols)))))
+  for (col in selected_cols) {
+    hist(df[[col]], main = paste("Histogram of", col), xlab = col)
+  }
+}
+
+# Call the function to plot histograms for columns 2 to 4
+plot_specific_histograms(df, 2,4)
+```
+```{r}
+df$mvpa_accelerometer<- sqrt(df$mvpa_accelerometer)
+df$mvpa_selfreport <- sqrt(df$mvpa_selfreport)
+```
+
+**4. Multiple Imputation**\
+In the imputation of accelerometer-derived MVPA duration and FPC, several survey covariates will be used. Most of these variables have very low rates of missingness (3-8%). To facilitate their use, I impute the variables with less missing rate first and then to the higher rates. 
+```{r}
+meth <- m0$method
+ pred <- m0$predictorMatrix
+
+#exclude_vars <- c("seqn", "sdmvstra", "sdmvpsu", "wtint2yr", "consent_status", "hypertension", "heartdiseases", "diabetes", "mvpa_accelerometer", "FPC1")
+
+> # Remove imputation method and predictors for excluded variables
+> meth[names(meth) %in% exclude_vars] <- ""
+> pred[, colnames(pred) %in% exclude_vars] <- 0
+> 
+> # Perform mice imputation with the custom predictor matrix
+> imp <- mice(df, predictorMatrix = pred, method = meth, 
++             visitSequence = colnames(df[, order(missing_rates)]),
++             maxit = 25)  
+```
+
+**5. Imputation Diagnostics**\
+```{r}
+```
