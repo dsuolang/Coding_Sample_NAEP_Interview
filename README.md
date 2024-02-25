@@ -1,4 +1,4 @@
-# Coding_Sample_NAEP_Interview
+# Introduction
 
 In this coding sample, I use a subset of the National Health and Nutrition Examination Survey (NHANES) 2011-2012 data to perform missing value imputation. The data has already undergone preprocessing and cleaning, and these steps are not detailed here. This dataset contains survey data collected from respondents, alongside data obtained from wrist-worn accelerometers used to objectively measure physical activity(PA). 
 
