@@ -7,11 +7,12 @@ The objective is to fill in the missing sensor-measured variables using multiple
 # Variables derived from sensory data (variables of interest)
 * Minutes spent in moderate-to-vigorous physical activity (MVPA)in a week: mvpa_accelerometer
 * Extracted activity patterns using functional principal component analysis: FPC1 (the score of the top principal component)
+  
 For those interested in the processing and feature extraction from accelerometer data, the corresponding codes are available in my GitHub repository: https://github.com/dsuolang/processing_accelerometer_nhanes.
 
 # Variables from survey data
-They may also contain missing data.
 * Minutes spent in moderate-to-vigorous physical activity (MVPA)in a week (self-reported): mvpa_selfreport
 * Demographic: age, gender, race, education, marital status, paid work, poverty/income ratio, self-reported health status, BMI
-* Health outcome: hypertension
+* Health outcome: hypertension, diabetes
 
+They may also contain missing data
